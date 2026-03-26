@@ -49,9 +49,8 @@ async function abort(message, detail = '') {
   process.exit(1);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // Step 1 — Check Node version (exit if < 16)
-// ─────────────────────────────────────────────────────────────────────────────
 const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
 if (nodeMajor < 16) {
   console.error(
