@@ -51,7 +51,7 @@ async function run() {
     showSummary(projectName, projectRoot, config);
 
     // 3. Let's do the work!
-    if (await getGoAhead(projectName)) {
+    if (await getGoAhead(projectName, options)) {
       await buildCore(projectRoot, config);
       await patchFiles(projectRoot, projectName);
       await installPackages(projectRoot);
@@ -87,6 +87,7 @@ function parseArguments() {
     .option("--auth", "Add authentication (JWT + bcrypt)")
     .option("--latest", "Use the latest cutting-edge stack")
     .option("--stable", "Use the stable standard stack")
+    .option("--yes", "Skip confirmation prompts")
     .parse(process.argv);
 
   const rawName = program.args[0];
@@ -144,14 +145,14 @@ async function askUser(options) {
   if (!options.auth) {
     withAuth = await confirm({
       message: "Add authentication?",
-      default: false,
+        default: false,
     });
   }
 
   const chosenFeatures = [];
   if (withAuth) chosenFeatures.push("auth");
 
-  return { preset, withAuth, chosenFeatures };
+  return { stability, preset, withAuth, chosenFeatures };
 }
 
 function showSummary(name, root, config) {
@@ -173,7 +174,8 @@ function showSummary(name, root, config) {
   console.log("");
 }
 
-async function getGoAhead(name) {
+async function getGoAhead(name, options) {
+  if (options.yes) return true;
   return await confirm({
     message: `Ready to create project "${name}"?`,
     default: true,
@@ -199,7 +201,7 @@ async function buildCore(root, config) {
   }
 
   // 3. Patch everything for React, Tailwind, and Router versions
-  await engine.updatePackages(root, config.preset);
+  await engine.updatePackages(root, config.preset, config, features);
   await engine.setupTailwind(root, config.preset);
   await engine.setupVite(root, config.preset);
   console.log(
@@ -285,9 +287,9 @@ function printDone(name) {
 
 function onError(err) {
   spinner?.stop();
-  if (projectRoot && fs.existsSync(projectRoot)) {
+  /* if (projectRoot && fs.existsSync(projectRoot)) {
     fs.removeSync(projectRoot);
-  }
+  } */
   console.error(
     chalk.red("  ✖ Something went wrong during the setup.\n") +
       chalk.dim(`    Error: ${err.message}\n`),
