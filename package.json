@@ -1,5 +1,5 @@
 {
-  "name": "create-stackforge",
+  "name": "create-quickstack",
   "version": "1.0.0",
   "description": "CLI to scaffold a full-stack MERN application with optional JWT authentication",
   "type": "module",
@@ -27,18 +27,18 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shivamm2606/stackforge.git"
+    "url": "https://github.com/shivamm2606/quickstack.git"
   },
-  "homepage": "https://github.com/shivamm2606/stackforge#readme",
+  "homepage": "https://github.com/shivamm2606/quickstack#readme",
   "bugs": {
-    "url": "https://github.com/shivamm2606/stackforge/issues"
+    "url": "https://github.com/shivamm2606/quickstack/issues"
   },
   "files": [
     "bin",
     "templates"
   ],
   "bin": {
-    "create-stackforge": "./bin/index.js"
+    "create-quickstack": "./bin/index.js"
   },
   "engines": {
     "node": ">=16"
