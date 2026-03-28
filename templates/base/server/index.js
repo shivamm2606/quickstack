@@ -23,9 +23,7 @@ app.use(express.json());
 app.use("/api", testRoutes);
 /* QUICKSTACK_AUTH_ROUTES */
 
-// Global error handler — must be registered AFTER all routes.
-// Express identifies it by the 4-argument signature (err, req, res, next).
-// Catches anything forwarded via next(err) or thrown inside async middleware.
+// Global error handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode ?? 500;
   const message    = err.message   ?? "Internal Server Error";
