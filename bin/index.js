@@ -16,7 +16,6 @@ import { Command } from "commander";
 import { confirm, select } from "@inquirer/prompts";
 import fs from "fs-extra";
 
-// Library helpers for the "secret sauce"
 import { presets } from "../lib/presets.js";
 import { features } from "../lib/features.js";
 import * as engine from "../lib/engine.js";
@@ -27,13 +26,11 @@ const __dirname = path.dirname(__filename);
 const BASE_TEMPLATE = path.join(__dirname, "..", "templates", "base");
 const FEATURES_BASE_DIR = path.join(__dirname, "..", "templates");
 
-// Global state for cleanup on catastrophic failure
+// Global state for cleanup on failure
 let spinner = null;
 let projectRoot = null;
 
-/**
- * ─── Main Logic ───────────────────────────────────────────────────────────
- */
+// Main
 async function run() {
   try {
     checkNode();
@@ -50,7 +47,7 @@ async function run() {
 
     showSummary(projectName, projectRoot, config);
 
-    // 3. Let's do the work!
+    // 3. Do
     if (await getGoAhead(projectName, options)) {
       await buildCore(projectRoot, config);
       await patchFiles(projectRoot, projectName);
@@ -64,10 +61,6 @@ async function run() {
     onError(err);
   }
 }
-
-/**
- * ─── Orchestrator Steps ──────────────────────────────────────────────────────
- */
 
 function checkNode() {
   const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
@@ -213,16 +206,15 @@ async function buildCore(root, config) {
 }
 
 async function patchFiles(root, name) {
-  // 1. Create your first environment file if it doesn't exist
+  //Create env file if it doesn't exist
   const envPath = path.join(root, ".env");
   const examplePath = path.join(root, ".env.example");
   if (await fs.pathExists(examplePath)) {
     await fs.copy(examplePath, envPath);
   }
 
-  // 2. Recursive Token Scanner (The "Handwritten" way)
-  // This replaces {{PROJECT_NAME}} in EVERY file we just scaffolded.
-  // Much cleaner than a hardcoded array!
+
+  // Token Scanner, This replaces {{PROJECT_NAME}} in EVERY file.
   async function tokenizeFolder(dir) {
     const items = await fs.readdir(dir);
     for (const item of items) {
@@ -259,7 +251,7 @@ async function installPackages(root) {
 
   try {
     execSync("npm install", { cwd: root, stdio: "inherit" });
-    console.log(chalk.green("  ✔") + " Project dependencies installed.");
+    console.log(chalk.green(" ✔") + " Project dependencies installed.");
   } catch (err) {
     throw new Error("npm install failed.");
   }
@@ -270,7 +262,7 @@ async function initGit(root) {
     execSync("git init -b main", { cwd: root, stdio: "ignore" });
   } catch {
     console.warn(
-      chalk.yellow("  ⚠ git init failed — continuing regardless.\n"),
+      chalk.yellow("  ⚠ git init failed - continuing regardless.\n"),
     );
   }
 }
@@ -297,5 +289,5 @@ function onError(err) {
   process.exit(1);
 }
 
-// Kick off the script
+// Run the script
 run();
