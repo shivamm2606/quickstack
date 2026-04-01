@@ -29,21 +29,21 @@ npx create-quickstack my-app
 
 ## 🚀 Getting started
 
-**Step 1 — Create the project**
+**Step 1 - Create the project**
 
 ```bash
 npx create-quickstack my-app
 cd my-app
 ```
 
-**Step 2 — Fill in your environment variables**
+**Step 2 - Fill in your environment variables**
 
-A `.env` file is auto-created from `.env.example` — just open it and fill in your values.
+A `.env` file is auto-created from `.env.example` - just open it and fill in your values.
 
-- `MONGO_URI` — your MongoDB connection string ([MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or a local instance)
-- `JWT_SECRET` — only required if you chose `auth`
+- `MONGO_URI` - your MongoDB connection string ([MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or a local instance)
+- `JWT_SECRET` - only required if you chose `auth`
 
-**Step 3 — Run it**
+**Step 3 - Run it**
 
 ```bash
 npm run dev
@@ -108,11 +108,11 @@ npx create-quickstack my-app --auth
 
 | Route     | Description                                                       |
 | --------- | ----------------------------------------------------------------- |
-| `/`       | Home page — protected, redirects to `/login` if not authenticated |
+| `/`       | Home page - protected, redirects to `/login` if not authenticated |
 | `/login`  | Login page                                                        |
 | `/signup` | Signup page                                                       |
 
-After a successful login you are redirected to `/`. All pages are fully customizable starter templates located in `client/src/pages/` — modify them however you like.
+After a successful login you are redirected to `/`. All pages are fully customizable starter templates located in `client/src/pages/` - modify them however you like.
 
 **Frontend routing (without `--auth`)**
 
@@ -133,13 +133,13 @@ If you don't specify a flag, the CLI will ask you to choose.
 
 ## ⚙️ CLI flags
 
-| Flag           | Description                                               |
-| -------------- | --------------------------------------------------------- |
-| `--auth`       | Includes full-stack JWT authentication                    |
-| `--stable`     | Uses Stable preset (React 18, Tailwind 3)                 |
-| `--latest`     | Uses Latest preset (React 19, Tailwind 4)                 |
-| `--yes`        | Skips all prompts, uses defaults (Stable preset, No Auth) |
-| `--help`       | Show help                                                 |
+| Flag       | Description                                               |
+| ---------- | --------------------------------------------------------- |
+| `--auth`   | Includes full-stack JWT authentication                    |
+| `--stable` | Uses Stable preset (React 18, Tailwind 3)                 |
+| `--latest` | Uses Latest preset (React 19, Tailwind 4)                 |
+| `--yes`    | Skips all prompts, uses defaults (Stable preset, No Auth) |
+| `--help`   | Show help                                                 |
 
 ```bash
 npx create-quickstack my-app
@@ -187,7 +187,7 @@ my-app/
 ```
 
 <details>
-<summary>With <code>--auth</code> — extra files added</summary>
+<summary>With <code>--auth</code> - extra files added</summary>
 
 ```
 server/
@@ -212,7 +212,7 @@ client/src/
 
 - Node.js ≥ 16
 - npm ≥ 7
-- Git (optional — only used for `git init` on the new project)
+- Git (optional - only used for `git init` on the new project)
 
 ---
 

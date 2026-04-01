@@ -23,7 +23,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api", testRoutes);
-// User routes — keep paths aligned with client/src/services/auth.js (baseURL /api).
+
+// User routes - keep paths aligned with client/src/services/auth.js (baseURL /api).
 app.use("/api/user", userRoutes);
 
 app.use((err, req, res, next) => {
