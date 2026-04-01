@@ -1,17 +1,11 @@
 #!/usr/bin/env node
 
-/**
- * QuickStack CLI: The Simple Scaffolder
- *
- * This orchestrator is a simple collection of functions that
- * talk through the process of building your new MERN project.
- */
+// QuickStack CLI - Create MERN Project from templates
 
 import { execSync } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
-import ora from "ora";
 import { Command } from "commander";
 import { confirm, select } from "@inquirer/prompts";
 import fs from "fs-extra";
@@ -27,31 +21,60 @@ const BASE_TEMPLATE = path.join(__dirname, "..", "templates", "base");
 const FEATURES_BASE_DIR = path.join(__dirname, "..", "templates");
 
 // Global state for cleanup on failure
-let spinner = null;
 let projectRoot = null;
 
-// Main
+function isSafeToRemoveProjectRoot(root) {
+  const resolvedTarget = path.resolve(root);
+
+  const resolvedCwd = path.resolve(process.cwd());
+
+  if (resolvedTarget === resolvedCwd) {
+    return false;
+  }
+
+  const rel = path.relative(resolvedCwd, resolvedTarget);
+
+  if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+    return false;
+  }
+
+  return true;
+}
+
+function isWithinProjectRoot(root, candidate) {
+  const rel = path.relative(path.resolve(root), path.resolve(candidate));
+
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
 async function run() {
   try {
     checkNode();
+    checkTools();
 
-    // 1. Get the basics from the CLI arguments
+    // Get basics from CLI arguments
     const { rawName, options } = parseArguments();
     const projectName = cleanName(rawName);
     projectRoot = path.resolve(process.cwd(), projectName);
 
     await checkFolder(projectName, projectRoot);
 
-    // 2. Ask the user what they want to build
     const config = await askUser(options);
 
-    showSummary(projectName, projectRoot, config);
+    showSummary(projectName, projectRoot, config, options);
 
-    // 3. Do
     if (await getGoAhead(projectName, options)) {
       await buildCore(projectRoot, config);
       await patchFiles(projectRoot, projectName);
-      await installPackages(projectRoot);
+      if (options.noInstall) {
+        console.log(
+          chalk.yellow(
+            "\n  ⚠ Skipping dependency installation (--no-install). Generated project is ready to run.\n",
+          ),
+        );
+      } else {
+        await installPackages(projectRoot);
+      }
       await initGit(projectRoot);
       printDone(projectName);
     } else {
@@ -64,11 +87,33 @@ async function run() {
 
 function checkNode() {
   const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
+
   if (nodeMajor < 16) {
     console.error(
       chalk.red("\n  ✖ QuickStack requires Node.js v16 or higher.\n"),
     );
     process.exit(1);
+  }
+}
+
+function checkTools() {
+  try {
+    execSync("npm --version", { stdio: "ignore" });
+  } catch {
+    console.error(
+      chalk.red("\n  ✖ QuickStack requires npm to be installed.\n"),
+    );
+    process.exit(1);
+  }
+
+  try {
+    execSync("git --version", { stdio: "ignore" });
+  } catch {
+    console.warn(
+      chalk.yellow(
+        "\n  ⚠ Warning: git is not installed. Git initialization will be skipped.\n",
+      ),
+    );
   }
 }
 
@@ -78,9 +123,10 @@ function parseArguments() {
     .name("create-quickstack")
     .argument("[project-name]", "Name of the project")
     .option("--auth", "Add authentication (JWT + bcrypt)")
-    .option("--latest", "Use the latest cutting-edge stack")
-    .option("--stable", "Use the stable standard stack")
+    .option("--latest", "Use the latest stack")
+    .option("--stable", "Use the stable stack")
     .option("--yes", "Skip confirmation prompts")
+    .option("--no-install", "Skip running npm install in the generated project")
     .parse(process.argv);
 
   const rawName = program.args[0];
@@ -100,7 +146,21 @@ function cleanName(name) {
     console.error(chalk.red(`\n  ✖ Invalid project name: "${name}"\n`));
     process.exit(1);
   }
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
+  const normalized = name.trim().toLowerCase().replace(/\s+/g, "-");
+  if (
+    !normalized ||
+    normalized === "." ||
+    normalized === ".." ||
+    !/[a-z0-9]/.test(normalized)
+  ) {
+    console.error(
+      chalk.red(
+        `\n  ✖ Invalid project name: must be non-empty and include at least one letter or number.\n`,
+      ),
+    );
+    process.exit(1);
+  }
+  return normalized;
 }
 
 async function checkFolder(name, root) {
@@ -111,10 +171,20 @@ async function checkFolder(name, root) {
 }
 
 async function askUser(options) {
+  if (options.latest && options.stable) {
+    console.error(
+      chalk.red("\n  ✖ Use either --latest or --stable, not both.\n"),
+    );
+    process.exit(1);
+  }
+
   let stability = null;
 
-  if (options.latest) stability = "latest";
-  else if (options.stable) stability = "stable";
+  if (options.latest) {
+    stability = "latest";
+  } else if (options.stable) {
+    stability = "stable";
+  }
 
   if (!stability) {
     stability = await select({
@@ -133,26 +203,29 @@ async function askUser(options) {
   }
 
   const preset = presets[stability];
+
   let withAuth = Boolean(options.auth);
 
   if (!options.auth) {
     withAuth = await confirm({
       message: "Add authentication?",
-        default: false,
+      default: false,
     });
   }
 
   const chosenFeatures = [];
-  if (withAuth) chosenFeatures.push("auth");
+  if (withAuth) {
+    chosenFeatures.push("auth");
+  }
 
   return { stability, preset, withAuth, chosenFeatures };
 }
 
-function showSummary(name, root, config) {
+function showSummary(name, root, config, options) {
   const divider = chalk.dim("  " + "─".repeat(43));
   console.log("");
   console.log(
-    chalk.bold.cyan("  QuickStack") + chalk.dim(" — Project Setup Summary"),
+    chalk.bold.cyan("  QuickStack") + chalk.dim(" - Project Setup Summary"),
   );
   console.log(divider);
   console.log(`  ${chalk.dim("Project name")}   ${chalk.bold.white(name)}`);
@@ -162,6 +235,11 @@ function showSummary(name, root, config) {
   );
   console.log(
     `  ${chalk.dim("Auth        ")}   ${config.withAuth ? chalk.green("yes") : chalk.yellow("no")}`,
+  );
+  console.log(
+    `  ${chalk.dim("Install     ")}   ${
+      options?.noInstall ? chalk.yellow("no") : chalk.green("yes")
+    }`,
   );
   console.log(divider);
   console.log("");
@@ -176,15 +254,16 @@ async function getGoAhead(name, options) {
 }
 
 async function buildCore(root, config) {
-  // 1. Start with the clean template files
   await fs.copy(BASE_TEMPLATE, root);
   console.log(
     chalk.blue("  ℹ") + chalk.dim(" Copying the core template files..."),
   );
 
-  // 2. Add extra modules like Authentication
   for (const featureKey of config.chosenFeatures) {
     const f = features[featureKey];
+    if (!f?.templatePath) {
+      throw new Error(`Unknown or misconfigured feature: "${featureKey}"`);
+    }
     await fs.copy(path.join(FEATURES_BASE_DIR, f.templatePath), root);
     if (f.onApply) await f.onApply(root, config.preset);
     console.log(
@@ -193,7 +272,7 @@ async function buildCore(root, config) {
     );
   }
 
-  // 3. Patch everything for React, Tailwind, and Router versions
+  // Create everything for React, Tailwind, and Router versions
   await engine.updatePackages(root, config.preset, config, features);
   await engine.setupTailwind(root, config.preset);
   await engine.setupVite(root, config.preset);
@@ -206,26 +285,47 @@ async function buildCore(root, config) {
 }
 
 async function patchFiles(root, name) {
-  //Create env file if it doesn't exist
+  // Create .env from .env.example
   const envPath = path.join(root, ".env");
   const examplePath = path.join(root, ".env.example");
   if (await fs.pathExists(examplePath)) {
     await fs.copy(examplePath, envPath);
   }
 
+  // Replace {{PROJECT_NAME}} under project root
+  const rootResolved = path.resolve(root);
 
-  // Token Scanner, This replaces {{PROJECT_NAME}} in EVERY file.
+  const BINARY_EXTS = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pdf",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".webp",
+    ".zip",
+  ];
   async function tokenizeFolder(dir) {
     const items = await fs.readdir(dir);
+
     for (const item of items) {
       const fullPath = path.join(dir, item);
-      const stat = await fs.stat(fullPath);
+      if (!isWithinProjectRoot(rootResolved, fullPath)) continue;
+
+      const stat = await fs.lstat(fullPath);
+      if (stat.isSymbolicLink()) continue;
 
       if (stat.isDirectory()) {
-        // Skip node_modules and .git if they somehow exist
         if (item === "node_modules" || item === ".git") continue;
         await tokenizeFolder(fullPath);
-      } else {
+      } else if (stat.isFile()) {
+        const ext = path.extname(fullPath).toLowerCase();
+        if (BINARY_EXTS.includes(ext)) continue;
+
         let content = await fs.readFile(fullPath, "utf8");
         if (content.includes("{{PROJECT_NAME}}")) {
           content = content.replace(/\{\{PROJECT_NAME\}\}/g, name);
@@ -236,24 +336,28 @@ async function patchFiles(root, name) {
   }
 
   await tokenizeFolder(root);
-  console.log(chalk.blue("  ℹ") + chalk.dim(" All project tokens replaced successfully."));
+  console.log(
+    chalk.blue("  ℹ") + chalk.dim(" All project tokens replaced successfully."),
+  );
 }
 
-async function installPackages(root) {
+function installPackages(root) {
   console.log("");
-  spinner = ora({
-    text: chalk.cyan(
-      "Installing project dependencies (this might take a minute)...",
-    ),
-    color: "cyan",
-  }).start();
-  spinner.stop();
+  console.log(
+    chalk.cyan("  ℹ ") +
+      chalk.dim(
+        "Installing project dependencies (this might take a minute)...",
+      ),
+  );
 
   try {
     execSync("npm install", { cwd: root, stdio: "inherit" });
-    console.log(chalk.green(" ✔") + " Project dependencies installed.");
+    console.log(chalk.green("\n  ✔") + " Project dependencies installed.");
   } catch (err) {
-    throw new Error("npm install failed.");
+    const detail = err?.message || String(err);
+    const wrapped = new Error(`Dependency install failed: ${detail}`);
+    wrapped.cause = err;
+    throw wrapped;
   }
 }
 
@@ -278,16 +382,20 @@ function printDone(name) {
 }
 
 function onError(err) {
-  spinner?.stop();
-  if (projectRoot && fs.existsSync(projectRoot)) {
+  if (
+    projectRoot &&
+    fs.existsSync(projectRoot) &&
+    isSafeToRemoveProjectRoot(projectRoot)
+  ) {
     fs.removeSync(projectRoot);
   }
+  let msg = err?.message || String(err);
+  if (err?.cause?.message) msg += ` (${err.cause.message})`;
   console.error(
     chalk.red("  ✖ Something went wrong during the setup.\n") +
-      chalk.dim(`    Error: ${err.message}\n`),
+      chalk.dim(`    Error: ${msg}\n`),
   );
   process.exit(1);
 }
 
-// Run the script
 run();
