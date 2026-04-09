@@ -118,9 +118,14 @@ function checkTools() {
 }
 
 function parseArguments() {
+  // get version from package.json
+  const pkgPath = path.join(__dirname, "..", "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+
   const program = new Command();
   program
     .name("create-quickstack-app")
+    .version(pkg.version, "-v, --version", "Output the current version")
     .argument("[project-name]", "Name of the project")
     .option("--auth", "Add authentication (JWT + bcrypt)")
     .option("--latest", "Use the latest stack")
