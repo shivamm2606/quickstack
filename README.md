@@ -17,9 +17,20 @@ npx create-quickstack-app my-app
 
 ---
 
-## What you get
+## 💡 Why QuickStack?
 
-| Layer           | Technology (Stable)                   | Technology (Latest)                   |
+| Feature | QuickStack | Manual Setup |
+| --- | --- | --- |
+| Full MERN stack in one command | ✅ | ❌ 30-60 min setup |
+| JWT auth built-in | ✅ `--auth` flag | ❌ Wire it yourself |
+| NPM Workspaces monorepo | ✅ | ❌ Separate installs |
+| Stability presets (React 18/19) | ✅ `--stable` / `--latest` | ❌ |
+| Zero config needed | ✅ | ❌ |
+| Express + Mongoose backend | ✅ | Manual |
+
+### What you get:
+
+| Layer           | Stable                                | Latest                                |
 | --------------- | ------------------------------------- | ------------------------------------- |
 | Frontend        | React 18 · Vite 5 · Tailwind 3        | React 19 · Vite 6 · Tailwind 4        |
 | Backend         | Express.js · Mongoose · dotenv        | Express.js · Mongoose · dotenv        |
