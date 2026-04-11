@@ -222,8 +222,8 @@ client/src/
 Clone the repo, link it locally, and use it like a normal user would:
 
 ```bash
-git clone https://github.com/shivamm2606/create-quickstack-app.git
-cd create-quickstack-app
+git clone https://github.com/shivamm2606/quickstack.git
+cd quickstack
 npm install
 npm link
 create-quickstack-app test-app
